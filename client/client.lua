@@ -44,11 +44,10 @@ RegisterCommand("showalerts", function()
     if PlayerData.job and PlayerData.job.name == 'police' or PlayerData.job.name == 'ambulance' or PlayerData.job.name == 'mechanic' or PlayerData.job.name == 'taxi' then
         if not showed then
             if checkTable(calls) then
-                    SendNUIMessage({
-                        show = true;
-                    })
-                    showed = true
-                end
+                SendNUIMessage({
+                    show = true;
+                })
+                showed = true
             else
                 SendNUIMessage({
                     show = true;
@@ -360,6 +359,13 @@ RegisterCommand("911", function(source, args)
     TriggerServerEvent("guille_dispatch:sendAlert", text, coords, id)
 end, false)
 
+RegisterCommand("911", function(source, args)
+    local coords = GetEntityCoords(PlayerPedId())
+    local id = GetPlayerServerId(PlayerId())
+    TriggerServerEvent("guille_dispatch:sendAlert", "He visto a unos hombres disparandose, que acuda la policia porfavor", coords, id)
+end, false)
+
+
 
 RegisterCommand("right", function()
     if calls[callnum + 1] ~= nil then
@@ -504,33 +510,32 @@ RegisterNUICallback("deletealert", function(cb)
     
     if (cb.selectedId + 1) == callnum then
         if checkTable(calls) then
-                if calls[callnum + 1] ~= nil then
-                    SendNUIMessage({
-                        content = calls[callnum + 1]['text'];
-                        callnum = num;
-                        totalcalls = totalcalls;
-                    })
-                    callnum = callnum + 1
-                elseif calls[callnum - 1] ~= nil then
-                    local num = callnum - 1
-                    SendNUIMessage({
-                        content = calls[callnum - 1]['text'];
-                        callnum = num;
-                        totalcalls = totalcalls;
-                    })
-                    callnum = callnum - 1
-                else
+            if calls[callnum + 1] ~= nil then
+                SendNUIMessage({
+                    content = calls[callnum + 1]['text'];
+                    callnum = num;
+                    totalcalls = totalcalls;
+                })
+                callnum = callnum + 1
+            elseif calls[callnum - 1] ~= nil then
+                local num = callnum - 1
+                SendNUIMessage({
+                    content = calls[callnum - 1]['text'];
+                    callnum = num;
+                    totalcalls = totalcalls;
+                })
+                callnum = callnum - 1
+            else
 
-                    callnum = 0
-                    totalcalls = 0
-                    calls = {}
-                    SendNUIMessage({
-                        content = "No alerts received";
-                        restart = true;
-                        newalert = false;
-                        
-                    })
-                end
+                callnum = 0
+                totalcalls = 0
+                calls = {}
+                SendNUIMessage({
+                    content = "No alerts received";
+                    restart = true;
+                    newalert = false;
+                    
+                })
             end
         end
     else
