@@ -44,14 +44,6 @@ RegisterCommand("showalerts", function()
     if PlayerData.job and PlayerData.job.name == 'police' or PlayerData.job.name == 'ambulance' or PlayerData.job.name == 'mechanic' or PlayerData.job.name == 'taxi' then
         if not showed then
             if checkTable(calls) then
-                if calls[callnum]['model'] ~= nil then
-                    SendNUIMessage({
-                        show = true;
-                        pic = true;
-                        model = calls[callnum]['model'];
-                    })
-                    showed = true
-                else
                     SendNUIMessage({
                         show = true;
                     })
@@ -512,16 +504,6 @@ RegisterNUICallback("deletealert", function(cb)
     
     if (cb.selectedId + 1) == callnum then
         if checkTable(calls) then
-            if calls[callnum]['model'] ~= nil then
-                SendNUIMessage({
-                    content = calls[callnum]['text'];
-                    callnum = num;
-                    totalcalls = totalcalls;
-                    pic = true;
-                    model = calls[callnum]['model'];
-                })
-                
-            else
                 if calls[callnum + 1] ~= nil then
                     SendNUIMessage({
                         content = calls[callnum + 1]['text'];
