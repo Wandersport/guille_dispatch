@@ -359,14 +359,6 @@ RegisterCommand("911", function(source, args)
     TriggerServerEvent("guille_dispatch:sendAlert", text, coords, id)
 end, false)
 
-RegisterCommand("911", function(source, args)
-    local coords = GetEntityCoords(PlayerPedId())
-    local id = GetPlayerServerId(PlayerId())
-    TriggerServerEvent("guille_dispatch:sendAlert", "He visto a unos hombres disparandose, que acuda la policia porfavor", coords, id)
-end, false)
-
-
-
 RegisterCommand("right", function()
     if calls[callnum + 1] ~= nil then
         local num = callnum + 1
