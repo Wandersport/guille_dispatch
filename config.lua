@@ -4,7 +4,6 @@ Config.enableVehiclePics = true
 
 Config.enableRobberyPics = true
 
-Config.Jobs = {}
 
 Config.Colors = {
     ['0'] = "Negro metálico",
