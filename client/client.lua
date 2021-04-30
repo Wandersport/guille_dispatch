@@ -1,10 +1,12 @@
--- GUILLE_DISPATCH OPTIMNIZED BY... VISIBAIT!
-
 local calls = {}
-local PlayerData = {}
 local callnum = 0
 local totalcalls = 0
-local isshowing = false
+local config = false
+local showed = false
+local PlayerData = {}
+local bigrambo = {}
+local nofilterquick = {}
+local wackytequiero = {}
 local activated = true
 
 ESX = nil 
@@ -35,26 +37,42 @@ AddEventHandler('esx:setJob', function(job)
         newalert = false;
     })
     SetNuiFocus(false, false)
-    isshowing = false
+    showed = false
 end)
 
 RegisterCommand("showalerts", function()
-    for _,job in pairs(Config.Jobs) do
-        if PlayerData.job and PlayerData.job == job then
-            if not isshowing then
-                if checkTable(calls) then
-                    showorhide(true)
-                else
-                    showorhide(false)
-                end
+    if PlayerData.job and PlayerData.job.name == 'police' or PlayerData.job.name == 'ambulance' or PlayerData.job.name == 'mechanic' or PlayerData.job.name == 'taxi' then
+        if not showed then
+            if checkTable(calls) then
+                SendNUIMessage({
+                    show = true;
+                })
+                showed = true
             else
-                showorhide(false)
+                SendNUIMessage({
+                    show = true;
+                })
+                showed = true
             end
         else
-            ESX.ShowNotification('Your job does not require alerts')
+            SendNUIMessage({
+                show = false;
+            })
+            showed = false
         end
+    else
+        ESX.ShowNotification('Your job does not require alerts')
     end
 end, false)
+
+AddEventHandler("onResourceStart", function(resource)
+    if resource == GetCurrentResourceName() then
+        Citizen.Wait(2000)
+        SendNUIMessage({
+            callnum = 0;
+        })
+    end
+end)
 
 RegisterNetEvent("guille_dispatch:alertToClient")
 AddEventHandler("guille_dispatch:alertToClient", function(text, coords, id)
@@ -78,17 +96,29 @@ AddEventHandler("guille_dispatch:vehToClient", function(coords, model, color, id
     if PlayerData.job and PlayerData.job.name == 'police' and activated then
         callnum = callnum + 1
         totalcalls = totalcalls + 1
-        local _pos = GetEntityCoords(PlayerPedId())
-        local distanceToAlert = #(coords - vector3(_pos))
+        local distanceToAlert = GetDistanceBetweenCoords(GetEntityCoords(PlayerPedId()), coords)
         local finalDistanceTo = ESX.Math.Round(ESX.Math.Round(distanceToAlert, 1) * 0.001, 1)
-        local tosend = {}
         if Config.enableVehiclePics then
-            table.insert(tosend, {content = "A man has stolen a vehicle model " ..model.. ",color "..color..", I got a photo of the vehicle. You meet " ..finalDistanceTo .. " km away";callnum = callnum;totalcalls = totalcalls;pic = true;model = model;newalert = true;id = id;})
+            SendNUIMessage({
+                content = "A man has stolen a vehicle model " ..model.. ",color "..color..", I got a photo of the vehicle. You meet " ..finalDistanceTo .. " km away";
+                callnum = callnum;
+                totalcalls = totalcalls;
+                pic = true;
+                model = model;
+                newalert = true;
+                id = id;
+            })
+            table.insert(calls, {text = "A man has stolen a vehicle model " ..model.. " de color "..color..", I got a photo of the vehicle. You meet " ..finalDistanceTo .. " km away", coords = coords, model = model})
         else
-            table.insert(tosend, {content = "A man has stolen a vehicle model " ..model.. " de color "..color..", I got a photo of the vehicle. You meet " ..finalDistanceTo .. " km away";callnum = callnum;totalcalls = totalcalls;newalert = true;id = id;})
+            SendNUIMessage({
+                content = "A man has stolen a vehicle model " ..model.. " de color "..color..", I got a photo of the vehicle. You meet " ..finalDistanceTo .. " km away";
+                callnum = callnum;
+                totalcalls = totalcalls;
+                newalert = true;
+                id = id;
+            })
+            table.insert(calls, {text = "A man has stolen a vehicle model " ..model.. " de color "..color..", I got a photo of the vehicle. You meet " ..finalDistanceTo .. " km away", coords = coords})
         end
-        SendNUIMessage(tosend)
-        table.insert(calls, {text = "A man has stolen a vehicle. Model: " ..model.. " Color: "..color..", I got a photo of the vehicle. The vehicle is " ..finalDistanceTo .. " km away", coords = coords, model = model})
     end
 end)
 
@@ -96,21 +126,21 @@ RegisterCommand("sos", function(source, args)
     local text = table.concat(args, " ")
     local coords = GetEntityCoords(PlayerPedId())
     local id = GetPlayerServerId(PlayerId())
-    TriggerServerEvent("guille_dispatch:server:sendAlert", "ambulance", text, coords, id)
+    TriggerServerEvent("guille_dispatch:sendAmbuAlert", text, coords, id)
 end, false)
 
 RegisterCommand("meca", function(source, args)
     local text = table.concat(args, " ")
     local coords = GetEntityCoords(PlayerPedId())
     local id = GetPlayerServerId(PlayerId())
-    TriggerServerEvent("guille_dispatch:server:sendAlert", "mechanic", text, coords, id)
+    TriggerServerEvent("guille_dispatch:sendMecaAlert", text, coords, id)
 end, false)
 
 RegisterCommand("taxi", function(source, args)
     local text = table.concat(args, " ")
     local coords = GetEntityCoords(PlayerPedId())
     local id = GetPlayerServerId(PlayerId())
-    TriggerServerEvent("guille_dispatch:server:sendAlert", "taxi", text, coords, id)
+    TriggerServerEvent("guille_dispatch:sendTaxiaAlert", text, coords, id)
 end, false)
 
 RegisterNetEvent("guille_dispatch:auxToClient")
@@ -144,7 +174,8 @@ AddEventHandler("guille_dispatch:taxiToClient", function(text, coords, id)
             id = id;
         })
         table.insert(calls, {text = text, coords = coords})
-    end 
+    end
+    
 end)
 
 
@@ -163,6 +194,7 @@ AddEventHandler("guille_dispatch:mecaToClient", function(text, coords, id)
         })
         table.insert(calls, {text = text, coords = coords})
     end
+    
 end)
 
 
@@ -324,7 +356,7 @@ RegisterCommand("911", function(source, args)
     local text = table.concat(args, " ")
     local coords = GetEntityCoords(PlayerPedId())
     local id = GetPlayerServerId(PlayerId())
-    TriggerServerEvent("guille_dispatch:server:sendAlert", "alert", text, coords, id)
+    TriggerServerEvent("guille_dispatch:sendAlert", text, coords, id)
 end, false)
 
 RegisterCommand("right", function()
@@ -372,7 +404,7 @@ RegisterCommand("left", function()
 end, false)
 
 RegisterCommand("mover", function(source, args)
-    if isshowing then 
+    if showed then 
         SetNuiFocus(true, true)
         SendNUIMessage({
             inConfig = true;
@@ -450,6 +482,7 @@ RegisterNUICallback("deletealerts", function()
         content = "No alerts received";
         restart = true;
         newalert = false;
+        
     })
     ESX.ShowNotification('All alerts deleted')
 end)
@@ -466,6 +499,7 @@ end)
 
 RegisterNUICallback("deletealert", function(cb)
     totalcalls = totalcalls - 1
+    
     if (cb.selectedId + 1) == callnum then
         if checkTable(calls) then
             if calls[callnum + 1] ~= nil then
@@ -504,38 +538,17 @@ RegisterNUICallback("deletealert", function(cb)
         })
     end
     table.remove(calls, cb.selectedId + 1)
+    
 end)
 
--- HANDLERS
-
-AddEventHandler("onResourceStart", function(resource)
-    if resource == GetCurrentResourceName() then
-        Citizen.Wait(2000)
-        SendNUIMessage({
-            callnum = 0;
-        })
-    end
-end)
-
--- FUNCS
-
-showorhide = function(info)
-    if info == true then
-        SendNUIMessage({
-            show = true;
-        })
-        isshowing = true
-    else
-        SendNUIMessage({
-            show = false;
-        })
-        isshowing = false
-    end
-end
-
-checkTable = function(table)
+function checkTable(table)
+    local init = false
     for k,v in pairs(table) do
-        return true
+        inIt = true
     end
-    return false
+    if inIt then
+        return true
+    else
+        return false
+    end
 end
